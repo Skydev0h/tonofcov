@@ -1,0 +1,4 @@
+{
+  "setupFilesAfterEnv": ["tonofcov/dist/jest-setup"],
+  "globalTeardown": "tonofcov/dist/jest-teardown"
+}
