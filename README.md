@@ -1,4 +1,4 @@
-# tonofcov
+# tonofcov (TON of Coverage)
 
 Source-line code coverage for TON smart contracts. Works with `@ton/sandbox` + Jest test suites. Emits standard LCOV consumable by:
 
