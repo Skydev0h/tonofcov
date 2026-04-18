@@ -1,13 +1,16 @@
 # tonofcov (TON of Coverage)
 
-Source-line code coverage for TON smart contracts. Works with `@ton/sandbox` + Jest test suites. Emits standard LCOV consumable by:
+Source-line code coverage for TON smart contracts, with first-class **branch coverage on conditional throws** (`throw_if` / `throw_unless` / `throw_arg_*`) — the most audit-relevant signal in FunC - see exactly which error paths your tests never triggered.
 
-- **VSCode** — [Coverage Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters) extension (green/red markers in the gutter)
-- **JetBrains IDEs** — native `Run > Show Coverage Data` (IntelliJ, WebStorm, etc.)
-- **Codecov / Coveralls** — drop `lcov.info` into CI, get PR coverage-diff comments
-- **`genhtml`** — standalone HTML report
+Works with `@ton/sandbox` + Jest. Outputs:
 
-Plus a built-in **self-contained HTML report** with syntax highlighting, gutter bars, multi-line throw classification, and a conditional-throws branch-coverage column.
+- **`coverage/lcov.info`** — standard LCOV consumable by:
+  - **VSCode** — [Coverage Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters) extension (green/red markers in the gutter)
+  - **JetBrains IDEs** — native `Run > Show Coverage Data` (IntelliJ, WebStorm, etc.)
+  - **Codecov / Coveralls** — drop into CI, get PR coverage-diff comments
+  - **`genhtml`** — standalone HTML report
+- **`coverage/html/index.html`** — built-in self-contained HTML report with syntax highlighting, gutter bars, multi-line throw classification, and a dedicated conditional-throws branch-coverage column.
+- **`coverage/gaps.md`** + **`gaps.json`** — agent-friendly listing of uncovered functions, partial throws, and uncovered ranges, designed for LLM-driven test-writing loops.
 
 ## Status
 
