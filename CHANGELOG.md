@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.0.56] — 2026-04-21
+
+### Changed
+- **Own FunC WASM compiler build.** Replaced dependency on `@ton-community/func-js` / `func-js-bin` with `tonofcov-func-bin` — our own WASM build of the FunC debugger compiler, built from [krigga/ton](https://github.com/krigga/ton) `debugger` branch. This fixes a WASM stack overflow that crashed debug compilation on larger contracts (e.g. EVAA master.fc at 8256 lines). Root cause: Fift interpreter recursion exceeded the default 1MB WASM stack; fix: `-sSTACK_SIZE=8388608` (8MB, matching native). The build pipeline is fully reproducible via [ton-wasm-builder](https://github.com/krigga/ton-wasm-builder) and open for future compiler modifications (e.g. inline function boundary markers).
+- **Fresh WASM instance per compilation.** The FunC compiler uses global state that is not reset between calls. Previously, compiling multiple contracts in one jest run (e.g. master + user + blank) would crash on the second invocation. Each `compileFunc` call now creates a fresh WASM module instance, eliminating global state leakage.
+
 ## [0.0.55] — 2026-04-21
 
 ### Changed

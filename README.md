@@ -18,7 +18,7 @@ Works with `@ton/sandbox` + Jest. Outputs:
 
 | Language | Status | Notes |
 |---|---|---|
-| FunC | working | Uses `@ton-community/func-js` `debugInfo` |
+| FunC | working | Own WASM build with debugger extensions (`tonofcov-func-bin`) |
 | Tolk | planned | Blocked on structured debug-info from tolk-js |
 | Tact | out of scope | Separate tool |
 
@@ -28,21 +28,9 @@ Works with `@ton/sandbox` + Jest. Outputs:
 npm install --save-dev tonofcov
 ```
 
-Peer-deps: `@ton/sandbox` ≥ 0.37, `@ton/core` ≥ 0.63, `@ton/blueprint` ≥ 0.41, `@ton-community/func-js` ≥ 0.10, `jest` ≥ 29.
+Peer-deps: `@ton/sandbox` ≥ 0.37, `@ton/core` ≥ 0.63, `@ton/blueprint` ≥ 0.41, `jest` ≥ 29.
 
-> **Known FunC compiler crash — pin `func-js-bin`**
->
-> The `@ton-community/func-js-bin` `0.4.6-wasmfix.debugger.1` WASM build hard-crashes on some FunC constructs with `RuntimeError: null function or function signature mismatch` during debug-info compilation. The exact trigger isn't yet isolated but it reproduces on larger contracts (e.g. a full jetton-minter implementation).
->
-> tonofcov's compile hook catches the crash and gracefully falls back to a non-debug compile for that specific contract — so your tests still run, but coverage data for it is dropped (it won't appear in the report).
->
-> To get coverage for crashing contracts, pin to the last known-good build via npm `overrides`:
-> ```json
-> "overrides": {
->   "@ton-community/func-js-bin": "0.4.6-wasmfix.debugger.0"
-> }
-> ```
-> Isolating the minimal FunC reproducer is a pending investigation — if you encounter the crash, a minimal `.fc` + stack trace in an issue is very welcome.
+> **Note:** tonofcov ships its own FunC compiler WASM build (`tonofcov-func-bin`) with debugger extensions and a stack overflow fix for large contracts. You do **not** need to install or configure `@ton-community/func-js-bin` — tonofcov handles compilation internally.
 
 ## Quick start
 
@@ -107,6 +95,7 @@ All configuration is via environment variables.
 | `TONOFCOV_EXCLUDE` | `**/stdlib.fc` | Comma-separated globs. Matching files are shown but don't count toward totals. Set to empty string to count everything. |
 | `TONOFCOV_TEST_NAME` | `""` | Populates LCOV's `TN:` field. |
 | `TONOFCOV_NO_INLINE_PROPAGATE` | — | Set to `1` to skip inline-propagation and post-processing passes; raw aggregation only. |
+| `TONOFCOV_NO_DEBUG` | — | Comma-separated substrings of target filenames to compile without debug info (no coverage for these contracts). Useful when debug-compiled code changes cell hashes that other contracts depend on. |
 | `TONOFCOV_VERBOSE` | — | Set to `1` for detailed progress logs (compilation, aggregation, CFG caps). |
 | `TONOFCOV_DEBUG` | — | Set to `1` for internal diagnostic output (between-fill ratio stats, etc.). |
 
@@ -149,7 +138,7 @@ For GitLab CI, Bitbucket Pipelines, etc. — the pattern is identical: run Jest,
 
 ## How it works
 
-1. A compile hook replaces blueprint's `doCompileFunc` to force `debugInfo: true`, then parses the debug-marks Cell into `(cell_hash, offset) → location_keys` maps.
+1. A compile hook replaces blueprint's `doCompileFunc` with tonofcov's own FunC WASM compiler (`tonofcov-func-bin`) to force `debugInfo: true`, then parses the debug-marks Cell into `(cell_hash, offset) → location_keys` maps.
 2. A sandbox hook wraps `Executor.runTransaction` / `runTickTock` / `runGetMethod` to bump vmLog verbosity to `full_location_stack` and capture every executed step's cell hash, offset, gas, and exception state.
 3. After tests (`afterAll` in the worker, then `globalTeardown` in the parent process), vmLogs are aggregated against the compile cache → raw per-line hits and throw counts.
 4. Post-processing: inline-propagation, multi-line-statement propagation, sequential-fill, dead-branch suppression, conditional-header normalization, return-statement capping, non-code-hit stripping, function-signature propagation.
@@ -161,4 +150,4 @@ MIT.
 
 ## Credits
 
-Built on top of work from `@ton/sandbox`'s debug-marks format, `@ton-community/func-js` structured debug info, and `@scaleton/tree-sitter-func` (GPL-3.0 grammar, loaded at runtime). This package itself is MIT.
+Built on top of work from `@ton/sandbox`'s debug-marks format, [krigga](https://github.com/krigga)'s FunC debugger compiler fork (`ctx_id`, `req_ctx_id`, branch coverage fields), and `@scaleton/tree-sitter-func` (GPL-3.0 grammar, loaded at runtime). The FunC WASM binary (`tonofcov-func-bin`) is built from [krigga/ton](https://github.com/krigga/ton) `debugger` branch via [ton-wasm-builder](https://github.com/krigga/ton-wasm-builder) and is GPL-2.0 (inheriting from TON source). This package itself is MIT.

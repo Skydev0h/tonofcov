@@ -1,6 +1,6 @@
 {
   "name": "tonofcov",
-  "version": "0.0.55",
+  "version": "0.0.56",
   "description": "Source-line code coverage for TON smart contracts (FunC, Tolk planned). HTML report, conditional-throw branch coverage, agent-friendly gaps listing, and LCOV output for IDEs and CI.",
   "license": "MIT",
   "repository": {
@@ -36,10 +36,10 @@
   ],
   "dependencies": {
     "@scaleton/tree-sitter-func": "^1.0.1",
+    "tonofcov-func-bin": ">=0.0.1",
     "web-tree-sitter": "^0.26.0"
   },
   "peerDependencies": {
-    "@ton-community/func-js": ">=0.10.0",
     "@ton/blueprint": ">=0.41.0",
     "@ton/core": ">=0.63.0",
     "@ton/sandbox": ">=0.37.0",

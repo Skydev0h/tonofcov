@@ -1,17 +1,13 @@
 /**
  * Compile hook — replaces @ton/blueprint's internal doCompileFunc with our own
- * implementation that:
- *   1. Attempts to call @ton-community/func-js compileFunc with debugInfo:true
- *   2. If that succeeds: captures DebugInfo + parsed marks into our cache
- *   3. If it fails (e.g. known WASM debugger bugs on certain contracts): falls
- *      back to a regular debugInfo:false compile so the user's build succeeds
- *      even if coverage is unavailable for that specific contract
+ * implementation using tonofcov's bundled FunC WASM (tonofcov-func-bin).
  *
  * Best-effort philosophy: never let coverage concerns break a user's test suite.
  */
 
 import { Cell } from '@ton/core';
 import { normalizeLocations, parseMarksCell, registerCompiled } from './compile-cache';
+import { compileFunc } from './func-compiler';
 
 let installed = false;
 
@@ -21,15 +17,22 @@ export function installCompileHook(): void {
 
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const funcModule = require('@ton/blueprint/dist/compile/func/compile.func');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const funcJs = require('@ton-community/func-js');
+
+    const noDebugPatterns = (process.env.TONOFCOV_NO_DEBUG ?? '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 
     funcModule.doCompileFunc = async function tonofcovDoCompileFunc(config: any): Promise<any> {
-        // 1. Try debug compile
+        const names: string[] = config.targets ?? [];
+        const skipDebug = noDebugPatterns.length > 0 && names.some(
+            t => noDebugPatterns.some(p => t.toLowerCase().includes(p)),
+        );
+
         let cr: any;
         let debugCompileOk = false;
-        try {
-            cr = await funcJs.compileFunc({ ...config, debugInfo: true });
+        if (skipDebug) {
+            cr = await compileFunc({ ...config, debugInfo: false });
+            if (cr.status === 'error') throw new Error(cr.message);
+        } else try {
+            cr = await compileFunc({ ...config, debugInfo: true });
             if (cr.status === 'ok') debugCompileOk = true;
             else {
                 // eslint-disable-next-line no-console
@@ -40,16 +43,14 @@ export function installCompileHook(): void {
             console.warn(`[tonofcov] debug compile threw for ${JSON.stringify(config.targets)}: ${err?.message ?? err}. Falling back to non-debug (coverage unavailable for this contract).`);
         }
 
-        // 2. Fallback — regular compile without debug info
         if (!debugCompileOk) {
-            cr = await funcJs.compileFunc({ ...config, debugInfo: false });
+            cr = await compileFunc({ ...config, debugInfo: false });
             if (cr.status === 'error') throw new Error(cr.message);
         }
 
         const code = Cell.fromBase64(cr.codeBoc);
         const marksCell = cr.debugMarksBoc ? Cell.fromBase64(cr.debugMarksBoc) : undefined;
 
-        // 3. Register if we have debug data
         if (debugCompileOk && cr.debugInfo && marksCell) {
             try {
                 const marksMap = parseMarksCell(marksCell, code);
@@ -66,7 +67,6 @@ export function installCompileHook(): void {
             }
         }
 
-        // 4. Return in blueprint's expected shape
         let targets: string[] = [];
         if (config.targets) targets = config.targets;
         else if (Array.isArray(config.sources)) targets = config.sources.map((s: any) => s.filename);
