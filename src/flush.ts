@@ -25,6 +25,9 @@ import type { Coverage, FileCoverage, LineStats, SuspectLine } from './types';
 
 const RAW_FILENAME = '.tonofcov-raw.json';
 
+const verbose = process.env.TONOFCOV_VERBOSE === '1';
+const debug = process.env.TONOFCOV_DEBUG === '1';
+
 function outDir(): string {
     return resolve(process.cwd(), process.env.TONOFCOV_OUT_DIR ?? 'coverage');
 }
@@ -67,8 +70,7 @@ export function flushRaw(): void {
         fileCount++;
         lineCount += fc.lines.size;
     }
-    // eslint-disable-next-line no-console
-    console.log(`[tonofcov] worker: ${count} vmLogs → ${fileCount} files, ${lineCount} lines → ${rawPath}`);
+    if (verbose) console.log(`[tonofcov] worker: ${count} vmLogs → ${fileCount} files, ${lineCount} lines → ${rawPath}`);
 }
 
 /**
@@ -252,10 +254,7 @@ function applyInlinePropagation(coverage: Coverage, analysis: any, sources: Map<
                 applied++;
             }
         }
-        if (applied > 0) {
-            // eslint-disable-next-line no-console
-            console.log(`[tonofcov] CFG return caps applied: ${applied}/${cfgReturnCaps.size} returns capped`);
-        }
+        if (applied > 0 && verbose) console.log(`[tonofcov] CFG return caps applied: ${applied}/${cfgReturnCaps.size} returns capped`);
     }
 
     capReturnStatementHits(coverage, analysis);
@@ -321,12 +320,10 @@ function applyInlinePropagation(coverage: Coverage, analysis: any, sources: Map<
     const ratios: any[] = [];
     const fillSuspects: SuspectLine[] = sequentialFill(coverage, analysis.blocks, sources, analysis.unconditionalThrowSites, conditionalHeaders, returnLines, ratios);
     suspects.push(...fillSuspects);
-    {
+    if (debug) {
         const sorted = ratios.sort((a: any, b: any) => b.ratio - a.ratio);
-        // eslint-disable-next-line no-console
         console.log(`[tonofcov] between-fill ratio stats: ${ratios.length} pairs`);
         for (const r of sorted.slice(0, 15)) {
-            // eslint-disable-next-line no-console
             console.log(`  ${r.file}:${r.L1}-${r.L2}  ${r.hitsL1} / ${r.hitsL2}  ratio=${r.ratio.toFixed(1)}`);
         }
     }

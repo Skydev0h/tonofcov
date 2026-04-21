@@ -37,10 +37,8 @@ export function aggregate(vmLogs: readonly string[]): Coverage {
         matchedOffsets += offsets;
     }
 
-    // Diagnostic — emitted once per aggregation. Helps users spot when nothing
-    // matches (typically: debug-compile failed for all contracts).
-    // eslint-disable-next-line no-console
-    console.log(`[tonofcov] aggregated: ${totalSteps} steps across ${uniqHashes.size} unique cell hashes; matched ${matchedCells} steps on ${matchedOffsets} offsets`);
+    if (process.env.TONOFCOV_VERBOSE === '1')
+        console.log(`[tonofcov] aggregated: ${totalSteps} steps across ${uniqHashes.size} unique cell hashes; matched ${matchedCells} steps on ${matchedOffsets} offsets`);
 
     return coverage;
 }

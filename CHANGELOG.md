@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.0.55] — 2026-04-21
+
+### Changed
+- **Quieter default output.** Detailed progress logs (compilation registration, aggregation stats, CFG caps) now require `TONOFCOV_VERBOSE=1`. Internal diagnostics (between-fill ratio stats) require `TONOFCOV_DEBUG=1`. Summary lines (final counts, HTML/gaps paths, anomaly count) and warnings still print unconditionally.
+
 ## [0.0.54] — 2026-04-21
 
 ### Added

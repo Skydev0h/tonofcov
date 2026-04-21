@@ -107,6 +107,8 @@ All configuration is via environment variables.
 | `TONOFCOV_EXCLUDE` | `**/stdlib.fc` | Comma-separated globs. Matching files are shown but don't count toward totals. Set to empty string to count everything. |
 | `TONOFCOV_TEST_NAME` | `""` | Populates LCOV's `TN:` field. |
 | `TONOFCOV_NO_INLINE_PROPAGATE` | — | Set to `1` to skip inline-propagation and post-processing passes; raw aggregation only. |
+| `TONOFCOV_VERBOSE` | — | Set to `1` for detailed progress logs (compilation, aggregation, CFG caps). |
+| `TONOFCOV_DEBUG` | — | Set to `1` for internal diagnostic output (between-fill ratio stats, etc.). |
 
 Globs support `*` (any char except `/`) and `**` (any chars including `/`).
 

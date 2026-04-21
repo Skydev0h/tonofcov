@@ -58,8 +58,8 @@ export function installCompileHook(): void {
                     normalizeLocations(cr.debugInfo.locations ?? []),
                     marksMap,
                 );
-                // eslint-disable-next-line no-console
-                console.log(`[tonofcov] registered ${JSON.stringify(config.targets)} codeHash=${code.hash().toString('hex').slice(0,16)} cells=${marksMap.size} locations=${cr.debugInfo.locations?.length ?? 0}`);
+                if (process.env.TONOFCOV_VERBOSE === '1')
+                    console.log(`[tonofcov] registered ${JSON.stringify(config.targets)} codeHash=${code.hash().toString('hex').slice(0,16)} cells=${marksMap.size} locations=${cr.debugInfo.locations?.length ?? 0}`);
             } catch (err) {
                 // eslint-disable-next-line no-console
                 console.error('[tonofcov] registerCompiled failed:', err);

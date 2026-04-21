@@ -32,8 +32,8 @@ export function installSandboxHook(): void {
         runTickTock: typeof proto?.runTickTock,
         runGetMethod: typeof proto?.runGetMethod,
     };
-    // eslint-disable-next-line no-console
-    console.log(`[tonofcov] sandbox-hook: Executor.prototype methods:`, report);
+    if (process.env.TONOFCOV_VERBOSE === '1')
+        console.log(`[tonofcov] sandbox-hook: Executor.prototype methods:`, report);
 
     // Sentinel so we can verify from within tests that the patched prototype is the same
     // one sandbox actually uses at runtime.
