@@ -101,6 +101,23 @@ Format for each entry:
 
 ---
 
+## 9. Debug compilation produces different bytecode than non-debug
+
+- **Observed**: contracts compiled with `debugInfo: true` have different cell hashes than the same contract compiled with `debugInfo: false`, even though DEBUGMARK opcodes are metadata-only (zero bytes in bytecode, zero gas at runtime).
+- **Root cause**: the FunC compiler's `.1` debugger branch inserts `_DebugInfo` ops into the AST unconditionally. These ops act as optimization barriers — the stack-layout optimizer cannot see through them for data-flow analysis. When two variables hold the same value (e.g. a slice copy for later use), the non-debug optimizer recognizes the copy relationship and arranges the stack so no extra swap is needed. The debug optimizer loses this visibility across `_DebugInfo` boundaries and emits a conservative `XCHG` to compensate. Both code paths are functionally correct — the swap is between values that happen to be identical — but the bytecode differs by one or more opcodes.
+- **Consequences**:
+  1. Code hash changes → contracts that verify child contract hashes (e.g. a master verifying a stub/blank code hash) will reject the debug-compiled version.
+  2. Slightly higher gas consumption in debug builds (extra stack manipulation opcodes).
+  3. Gas-sensitive tests with tight thresholds may fail under debug compilation.
+- **Mitigation**: `TONOFCOV_NO_DEBUG=<pattern>` excludes matching contracts from debug compilation. Use for contracts whose hash must be stable (code-verified stubs) or for gas-critical test targets. These contracts get no coverage but don't break the test suite.
+- **Future fix ideas**:
+  - Teach the FunC optimizer to treat `_DebugInfo` ops as transparent for data-flow analysis (requires compiler change in `optimize.cpp`).
+  - Only insert `_DebugInfo` ops into the CodeBlob when `with_debug_info = true` (attempted but causes index desync between debug_infos deque and Op references — needs careful rework of the index tracking).
+  - Use asm inserts in FunC source to pin stack layout at sensitive points, removing optimizer freedom and making debug/non-debug output identical for those functions.
+- **Severity**: LOW for coverage users (workaround exists), MEDIUM for projects with hash-verified contracts.
+
+---
+
 ## How to add an entry
 
 When debugging a new anomaly, if root-causing it would require runtime instrumentation or deeper compiler cooperation:

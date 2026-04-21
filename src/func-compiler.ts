@@ -20,17 +20,20 @@ export interface CompileResult {
 }
 
 let cachedWasm: Buffer | null = null;
-let cachedFactory: any = null;
+let modulePath: string | null = null;
 
 async function createModule(): Promise<any> {
     if (!cachedWasm) {
         // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         const bin = require('tonofcov-func-bin');
         cachedWasm = readFileSync(bin.wasmPath);
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-        cachedFactory = require(bin.modulePath);
+        modulePath = bin.modulePath;
     }
-    return cachedFactory({ wasmBinary: cachedWasm });
+    // Fresh require each time — emscripten factory leaks global state through JS closures
+    delete require.cache[require.resolve(modulePath!)];
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const factory = require(modulePath!);
+    return factory({ wasmBinary: cachedWasm });
 }
 
 function copyToCString(mod: any, str: string): number {
