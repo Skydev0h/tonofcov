@@ -21,29 +21,28 @@
  * hits don't fill lines inside inner blocks (which need their own evidence).
  */
 
-import type { Coverage } from './types';
+import type { Coverage, SuspectLine } from './types';
 import type { Block } from './func-ast';
+
+export type FillRatioEntry = {
+    file: string;
+    L1: number;
+    L2: number;
+    hitsL1: number;
+    hitsL2: number;
+    ratio: number;
+};
 
 export function sequentialFill(
     coverage: Coverage,
     blocks: readonly Block[],
     sources: Map<string, string>,
-    /**
-     * Set of `file:line` keys for unconditional throw call sites
-     * (throw / throw_arg, NOT throw_if/throw_unless). Used to stop
-     * trailing-fill so dead code after an unconditional throw doesn't
-     * get spurious hits. Optional — omit for no special handling.
-     */
     unconditionalThrowSites: Set<string> = new Set(),
-    /**
-     * Set of `file:line` keys for conditional-flow headers (if / while /
-     * repeat / do). Trailing-fill must not propagate past these — an
-     * `if (cond) { ...return... }` in the middle of a block can divert
-     * flow, so code after the if sees fewer hits than the last straight-
-     * line anchor before the if. Stop forward-fill at such lines.
-     */
     conditionalHeaders: Set<string> = new Set(),
-): void {
+    returnLines: Set<string> = new Set(),
+    ratios?: FillRatioEntry[],
+): SuspectLine[] {
+    const suspects: SuspectLine[] = [];
     const blocksByFile = new Map<string, Block[]>();
     for (const b of blocks) {
         const arr = blocksByFile.get(b.file) ?? [];
@@ -77,10 +76,25 @@ export function sequentialFill(
                 const L2 = ownHits[i + 1];
                 if (L2.line - L1.line <= 1) continue;
 
+                if (ratios) {
+                    const hi = Math.max(L1.count, L2.count);
+                    const lo = Math.min(L1.count, L2.count);
+                    const ratio = lo > 0 ? hi / lo : (hi > 0 ? Infinity : 1);
+                    ratios.push({ file, L1: L1.line, L2: L2.line, hitsL1: L1.count, hitsL2: L2.count, ratio });
+                }
+
+                const l1Key = `${file}:${L1.line}`;
+                if (unconditionalThrowSites.has(l1Key)) {
+                    suspects.push({ file, line: L2.line, reason: `has hits after unconditional throw at line ${L1.line}` });
+                    continue;
+                }
+                if (returnLines.has(l1Key)) {
+                    suspects.push({ file, line: L2.line, reason: `has hits after return at line ${L1.line}` });
+                    continue;
+                }
+
                 const count = Math.min(L1.count, L2.count);
                 for (let line = L1.line + 1; line < L2.line; line++) {
-                    // Only fill lines that belong to THIS block's own scope
-                    // (same innermost — not inside a sub-block).
                     if (findInnermost(fileBlocks, line) !== block) continue;
                     if (fc.lines.has(line)) continue;
                     if (!isCodeLine(sourceLines[line - 1])) continue;
@@ -100,8 +114,16 @@ export function sequentialFill(
             const first = ownHits[0];
             for (let line = block.startLine + 1; line < first.line; line++) {
                 if (findInnermost(fileBlocks, line) !== block) continue;
-                if (unconditionalThrowSites.has(`${file}:${line}`)) continue;
-                if (conditionalHeaders.has(`${file}:${line}`)) continue;
+                const key = `${file}:${line}`;
+                if (unconditionalThrowSites.has(key)) {
+                    suspects.push({ file, line, reason: `unconditional throw before first covered line ${first.line}` });
+                    break;
+                }
+                if (returnLines.has(key)) {
+                    suspects.push({ file, line, reason: `return before first covered line ${first.line}` });
+                    break;
+                }
+                if (conditionalHeaders.has(key)) continue;
                 if (fc.lines.has(line)) continue;
                 if (!isCodeLine(sourceLines[line - 1])) continue;
                 fc.lines.set(line, { hits: first.count, totalGas: 0 });
@@ -135,6 +157,7 @@ export function sequentialFill(
             }
         }
     }
+    return suspects;
 }
 
 /**

@@ -53,6 +53,13 @@ export function size(): number {
 }
 
 /**
+ * Iterate all compiled entries. Used by CFG builder to access locations.
+ */
+export function allEntries(): IterableIterator<CompiledDebugInfo> {
+    return cache.values();
+}
+
+/**
  * Bridge from func-js's LocationEntry[] to our SourceLocation[].
  * Keeps the shape stable across func-js minor versions.
  */
@@ -60,19 +67,23 @@ export function normalizeLocations(
     rawLocations: ReadonlyArray<{
         file: string;
         line: number;
+        pos?: number;
         func: string;
         first_stmt?: true;
         ret?: true;
         try_catch_ctx_id?: number;
         is_try_end?: true;
         ctx_id: number;
+        req_ctx_id?: number;
         branch_true_ctx_id?: number;
         branch_false_ctx_id?: number;
+        vars?: string[];
     }>,
 ): SourceLocation[] {
     return rawLocations.map(r => ({
         file: r.file,
         line: r.line,
+        pos: r.pos,
         func: r.func,
         firstStatement: r.first_stmt,
         ret: r.ret,
@@ -81,6 +92,8 @@ export function normalizeLocations(
         tryCatchCtxId: r.try_catch_ctx_id,
         isTryEnd: r.is_try_end,
         ctxId: r.ctx_id,
+        reqCtxId: r.req_ctx_id,
+        vars: r.vars,
     }));
 }
 

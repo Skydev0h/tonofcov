@@ -125,9 +125,22 @@ tr.r-partial   .g-line { border-left-color: #dfc063; }
 .code { width: 100%; color: #24292f; padding-left: 14px !important; }
 
 tr.r-covered   { background: #dafbe1; }  /* light green */
-tr.r-uncovered { background: #fff0ef; }  /* light red — slightly more readable than full #fff5f4 but still softer than the green */
+tr.r-uncovered { background: #fff0ef; }  /* light red */
 tr.r-partial   { background: #fff8c5; }  /* light yellow */
 tr.r-nonexec   { background: transparent; }
+tr.r-suspect   { background: #dbeafe; }  /* light blue — analysis anomaly, overrides row bg, gutter stays */
+
+.suspect-summary {
+    padding: 12px 24px;
+    background: #eff6ff;
+    border-bottom: 1px solid #bfdbfe;
+    color: #1e40af;
+    font-size: 13px;
+}
+.suspect-summary b { font-weight: 600; }
+.suspect-summary ul { margin: 6px 0 0 0; padding-left: 20px; }
+.suspect-summary li { margin: 2px 0; }
+.suspect-summary .line-ref { font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* Syntax colors — GitHub Light palette */
 .tok-kw      { color: #cf222e; }

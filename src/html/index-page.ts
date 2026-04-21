@@ -22,6 +22,7 @@ export type FileSummary = {
      * are not summed into the header percentages.
      */
     counted: boolean;
+    suspectCount: number;
 };
 
 function pctOf(covered: number, total: number): number {
@@ -39,8 +40,11 @@ function renderRow(s: FileSummary, opts: { dimmed?: boolean } = {}): string {
           `<td class="pct">${throwsPct}%</td>` +
           `<td class="bar"><div class="bar-track"><div class="bar-fill throws" style="width:${throwsPct}%"></div></div></td>`;
     const rowCls = opts.dimmed ? ' class="dimmed"' : '';
+    const suspectBadge = s.suspectCount > 0
+        ? ` <span style="color:#2563eb;font-weight:600;font-size:12px">(${s.suspectCount})</span>`
+        : '';
     return `<tr${rowCls}>
-<td><a href="${escapeHtml(s.href)}">${escapeHtml(s.file)}</a></td>
+<td><a href="${escapeHtml(s.href)}">${escapeHtml(s.file)}</a>${suspectBadge}</td>
 <td class="num group-sep">${s.totalExec}</td>
 <td class="num">${s.coveredExec}</td>
 <td class="pct">${linesPct}%</td>

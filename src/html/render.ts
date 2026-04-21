@@ -10,7 +10,7 @@
  * is readable both at a glance (row tint) and precisely (marker strip).
  */
 
-import type { FileCoverage, LineStats } from '../types';
+import type { FileCoverage, LineStats, SuspectLine } from '../types';
 import { escapeHtml, renderLine, tokenizeFunC } from './highlight';
 import { buildNonExecSet } from './render-internals';
 
@@ -55,7 +55,12 @@ export async function renderFilePage(
     throwSites: Set<string> = new Set(),
     conditionalThrowSites: Set<string> = new Set(),
     throwStatementStart: Map<string, { file: string; line: number }> = new Map(),
+    suspects: readonly SuspectLine[] = [],
 ): Promise<string> {
+    const suspectMap = new Map<number, string>();
+    for (const s of suspects) {
+        if (s.file === file) suspectMap.set(s.line, s.reason);
+    }
     const tokens = await tokenizeFunC(source);
     const nonExec = buildNonExecSet(source, tokens);
     const sourceLines = source.split(/\n/);
@@ -93,9 +98,10 @@ export async function renderFilePage(
             throwLabel = String(stats?.throws ?? 0);
         }
 
-        void mark; // kept for future dedicated-column tweak
+        void mark;
+        const suspectClass = suspectMap.has(lineNum) ? ' r-suspect' : '';
         rows.push(
-            `<tr class="${row}">` +
+            `<tr class="${row}${suspectClass}">` +
             `<td class="g-throws">${throwLabel}</td>` +
             `<td class="g-hits">${hitsLabel}</td>` +
             `<td class="g-line">${lineNum}</td>` +
@@ -105,6 +111,15 @@ export async function renderFilePage(
     }
 
     const pct = totalExec === 0 ? 100 : Math.round((coveredExec / totalExec) * 1000) / 10;
+
+    let suspectHtml = '';
+    if (suspectMap.size > 0) {
+        const items = [...suspectMap.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([ln, reason]) => `<li><span class="line-ref">Line ${ln}</span>: ${escapeHtml(reason)}</li>`)
+            .join('\n');
+        suspectHtml = `\n<div class="suspect-summary">\n<b>Analysis anomalies (${suspectMap.size}):</b>\n<ul>\n${items}\n</ul>\n</div>`;
+    }
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -119,7 +134,7 @@ export async function renderFilePage(
 <span class="sep">/</span>
 <span class="cur">${escapeHtml(file)}</span>
 <span class="stats">${coveredExec} / ${totalExec} lines (${pct}%)</span>
-</nav>
+</nav>${suspectHtml}
 <table class="src">
 ${rows.join('\n')}
 </table>

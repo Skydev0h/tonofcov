@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.0.54] — 2026-04-21
+
+### Added
+- **Analysis anomaly detection.** Six detectors flag suspicious lines in the HTML report with a blue background and a summary box at the top of the file page:
+  1. Leading-fill: unconditional throw/return before first covered line in block
+  2. Between-fill: anchor after unconditional throw/return in same scope
+  3. Inline function body has hits but call site still zero after propagation
+  4. Branch body has hits but condition header has none before propagation
+  5. Function signature hits > 2× max body hits
+  6. Return with hits but zero siblings in block (shared-RET, blocks > 3 lines only)
+- **CFG return caps** via `req_ctx_id` chain tracing. For each return location, traces backwards through the compiler's control-flow graph to find the structurally correct upper bound (nearest ancestor with hits on a different line, or function entry count). Applied before `capReturnStatementHits`. On tgusd: 21 returns capped, reducing inflation up to 407× (e.g. jetton-minter.fc:367 raw=407 → cap=1).
+- New module `src/cfg.ts`: `buildCfg`, `traceBack`, `findAncestorCap`, `findFunctionEntry`.
+- Anomaly count badge in HTML index page (blue number in parentheses after filename, shown only when > 0).
+- `compile-cache.ts`: `allEntries()` iterator for accessing all compiled contracts.
+
+### Changed
+- `normalizeLocations` now preserves `pos` (column position), `vars` (live variable names), and `reqCtxId` (CFG predecessor chain) from the compiler output. Previously dropped.
+- `SourceLocation` type extended with `pos?`, `vars?`, `reqCtxId?` fields.
+- Leading-fill in `sequentialFill` now `break`s (not `continue`s) at unconditional throws and returns — stops filling dead code instead of skipping and continuing.
+- Serialized coverage (`.tonofcov-raw.json`) now includes `cfgReturnCaps` alongside `opcodeDivisors`.
+- Between-fill ratio diagnostic (temporary, for metric collection).
+
 ## [0.0.53] — 2026-04-18
 
 ### Changed

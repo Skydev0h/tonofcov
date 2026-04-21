@@ -11,6 +11,8 @@
 export type SourceLocation = {
     file: string;
     line: number;
+    /** Character position within the line (0-based column). */
+    pos?: number;
     func: string;
     /** True if this location marks a statement boundary (executable line). */
     firstStatement?: boolean;
@@ -23,6 +25,10 @@ export type SourceLocation = {
     tryCatchCtxId?: number;
     isTryEnd?: boolean;
     ctxId: number;
+    /** CFG predecessor — this location requires reqCtxId to have executed first. */
+    reqCtxId?: number;
+    /** Live variable names at this program point. */
+    vars?: readonly string[];
 };
 
 /**
@@ -99,4 +105,14 @@ export type FunctionStats = {
  */
 export type Coverage = {
     files: Map<string, FileCoverage>;
+};
+
+/**
+ * A line flagged during post-processing as having an analysis anomaly.
+ * Rendered with a distinct background in the HTML report.
+ */
+export type SuspectLine = {
+    file: string;
+    line: number;
+    reason: string;
 };

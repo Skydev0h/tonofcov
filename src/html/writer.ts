@@ -6,7 +6,7 @@
 
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Coverage } from '../types';
+import type { Coverage, SuspectLine } from '../types';
 import { buildShouldCountFn } from '../filters';
 import { renderFilePage } from './render';
 import { renderIndexPage, type FileSummary } from './index-page';
@@ -34,6 +34,7 @@ export async function writeHtmlReport(
     throwSites: Set<string> = new Set(),
     conditionalThrowSites: Set<string> = new Set(),
     throwStatementStart: Map<string, { file: string; line: number; conditional: boolean }> = new Map(),
+    suspects: readonly SuspectLine[] = [],
 ): Promise<void> {
     const htmlRoot = join(outDir, 'html');
     const filesDir = join(htmlRoot, 'files');
@@ -47,7 +48,7 @@ export async function writeHtmlReport(
     for (const [file, fc] of coverage.files) {
         const source = sources.get(file);
         if (!source) continue;
-        const html = await renderFilePage(file, source, fc, throwSites, conditionalThrowSites, throwStatementStart);
+        const html = await renderFilePage(file, source, fc, throwSites, conditionalThrowSites, throwStatementStart, suspects);
         const filename = safeFilename(file);
         writeFileSync(join(filesDir, filename), html, 'utf8');
 
@@ -86,6 +87,7 @@ export async function writeHtmlReport(
             if (stats && (stats.throws ?? 0) > 0) throwsCovered++;
         }
 
+        const suspectCount = suspects.filter(s => s.file === file).length;
         summaries.push({
             file,
             href: `files/${filename}`,
@@ -94,6 +96,7 @@ export async function writeHtmlReport(
             throwsTotal,
             throwsCovered,
             counted: shouldCount(file),
+            suspectCount,
         });
     }
 
