@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.0.58] — 2026-04-22
+
+### Changed
+- Default `TONOFCOV_EXCLUDE` extended from `**/stdlib.fc` to `**/stdlib.fc,**/mathlib.fc`. The TON fixed-point math library is rarely tested directly by user tests and inflates the uncovered-line count; excluding it by default gives more meaningful overall percentages.
+- README reorganised: gaps report moved to top of outputs list (its agent-friendly format is the unique selling point), inline jest hook setup promoted over preset (most TON projects already have a preset).
+
 ## [0.0.57] — 2026-04-22
 
 ### Fixed

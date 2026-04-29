@@ -4,13 +4,13 @@ Source-line code coverage for TON smart contracts, with first-class **branch cov
 
 Works with `@ton/sandbox` + Jest. Outputs:
 
+- **`coverage/gaps.md`** + **`gaps.json`** — structured listing of uncovered functions, one-sided throws, and uncovered ranges with per-entry source snippets and AST context. Designed as input for LLM-driven test-writing loops: feed it to an agent and have it iteratively close coverage gaps. No other TON coverage tool produces this.
+- **`coverage/html/index.html`** — built-in self-contained HTML report with syntax highlighting, gutter bars, multi-line throw classification, and a dedicated conditional-throws branch-coverage column.
 - **`coverage/lcov.info`** — standard LCOV consumable by:
   - **VSCode** — [Coverage Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters) extension (green/red markers in the gutter)
   - **JetBrains IDEs** — native `Run > Show Coverage Data` (IntelliJ, WebStorm, etc.)
   - **Codecov / Coveralls** — drop into CI, get PR coverage-diff comments
   - **`genhtml`** — standalone HTML report
-- **`coverage/html/index.html`** — built-in self-contained HTML report with syntax highlighting, gutter bars, multi-line throw classification, and a dedicated conditional-throws branch-coverage column.
-- **`coverage/gaps.md`** + **`gaps.json`** — agent-friendly listing of uncovered functions, partial throws, and uncovered ranges, designed for LLM-driven test-writing loops.
 
 ## Status
 
@@ -126,7 +126,7 @@ All configuration is via environment variables.
 | `TONOFCOV_NO_GAPS` | — | Alternative kill switch for gaps. `=1` disables. |
 | `TONOFCOV_OUT_DIR` | `coverage` | Output directory, relative to cwd. |
 | `TONOFCOV_INCLUDE` | — | Comma-separated globs. If set, ONLY matching files contribute to overall totals. |
-| `TONOFCOV_EXCLUDE` | `**/stdlib.fc` | Comma-separated globs. Matching files are shown but don't count toward totals. Set to empty string to count everything. |
+| `TONOFCOV_EXCLUDE` | `**/stdlib.fc,**/mathlib.fc` | Comma-separated globs. Matching files are shown but don't count toward totals. Set to empty string to count everything. |
 | `TONOFCOV_TEST_NAME` | `""` | Populates LCOV's `TN:` field. |
 | `TONOFCOV_NO_INLINE_PROPAGATE` | — | Set to `1` to skip inline-propagation and post-processing passes; raw aggregation only. |
 | `TONOFCOV_NO_DEBUG` | — | Comma-separated substrings of target filenames to compile without debug info (no coverage for these contracts). Useful when debug-compiled code changes cell hashes that other contracts depend on. |

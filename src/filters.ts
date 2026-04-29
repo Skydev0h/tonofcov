@@ -5,8 +5,8 @@
  *   - `TONOFCOV_INCLUDE=pat1,pat2,...` — ONLY files matching count.
  *   - `TONOFCOV_EXCLUDE=pat1,pat2,...` — files matching are excluded. If
  *     set, REPLACES the default exclude list.
- *   - Default exclude (neither set): `** /stdlib.fc` so vendored FunC
- *     stdlib copies don't drag the project's coverage down.
+ *   - Default exclude (neither set): `** /stdlib.fc,** /mathlib.fc` so vendored
+ *     FunC stdlib and mathlib copies don't drag the project's coverage down.
  *
  * Patterns are simple globs (`*` = any-char-but-slash, `**` = any chars).
  */
@@ -31,7 +31,7 @@ export function buildShouldCountFn(): (file: string) => boolean {
         return (file) => patterns.some(p => p.test(file));
     }
 
-    const excludePatterns = (exclude !== undefined ? exclude : '**/stdlib.fc')
+    const excludePatterns = (exclude !== undefined ? exclude : '**/stdlib.fc,**/mathlib.fc')
         .split(',').map(s => s.trim()).filter(Boolean).map(globToRegex);
     if (excludePatterns.length === 0) {
         return () => true;

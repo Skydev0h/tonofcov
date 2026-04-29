@@ -1,6 +1,6 @@
 {
   "name": "tonofcov",
-  "version": "0.0.57",
+  "version": "0.0.58",
   "description": "Source-line code coverage for TON smart contracts (FunC, Tolk planned). HTML report, conditional-throw branch coverage, agent-friendly gaps listing, and LCOV output for IDEs and CI.",
   "license": "MIT",
   "repository": {
