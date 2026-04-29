@@ -48,6 +48,27 @@ module.exports = {
 
 Most TON projects already use `ts-jest` or a preset shipped with `@ton/blueprint` / `@ton/sandbox`, and Jest only allows one preset — so adding the two hooks inline is the path of least resistance. If your project already sets `setupFilesAfterEnv`, append `'tonofcov/dist/jest-setup'` to the array rather than replacing it.
 
+If you already have a `globalTeardown` of your own (Jest only allows one), wrap it:
+
+```js
+// jest.teardown.js
+const tonofcovTeardown = require('tonofcov/dist/jest-teardown').default;
+const myTeardown = require('./my-existing-teardown');
+
+module.exports = async () => {
+  await myTeardown();
+  await tonofcovTeardown();
+};
+```
+
+```js
+// jest.config.js
+module.exports = {
+  globalTeardown: './jest.teardown.js',
+  // ...
+};
+```
+
 If you have no preset configured yet, you can use tonofcov's instead:
 
 ```js
