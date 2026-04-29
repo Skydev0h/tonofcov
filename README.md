@@ -44,6 +44,20 @@ module.exports = {
 };
 ```
 
+If you already use a preset (e.g. `ts-jest`, or one shipped with `@ton/blueprint` / `@ton/sandbox`), Jest only allows one. Inline tonofcov's two hooks instead:
+
+```js
+// jest.config.js
+module.exports = {
+  preset: 'ts-jest',                                      // your existing preset
+  setupFilesAfterEnv: ['tonofcov/dist/jest-setup'],       // add this
+  globalTeardown: 'tonofcov/dist/jest-teardown',          // add this
+  // ...your existing config
+};
+```
+
+If your project already sets `setupFilesAfterEnv`, append `'tonofcov/dist/jest-setup'` to the array rather than replacing it.
+
 Run tests as usual:
 
 ```bash
