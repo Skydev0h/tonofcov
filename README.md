@@ -126,7 +126,7 @@ All configuration is via environment variables.
 | `TONOFCOV_NO_GAPS` | — | Alternative kill switch for gaps. `=1` disables. |
 | `TONOFCOV_OUT_DIR` | `coverage` | Output directory, relative to cwd. |
 | `TONOFCOV_INCLUDE` | — | Comma-separated globs. If set, ONLY matching files contribute to overall totals. |
-| `TONOFCOV_EXCLUDE` | `**/stdlib.fc,**/mathlib.fc` | Comma-separated globs. Matching files are shown but don't count toward totals. Set to empty string to count everything. |
+| `TONOFCOV_EXCLUDE` | `**/stdlib.fc,`<br/>`**/mathlib.fc` | Comma-separated globs. Matching files are shown but don't count toward totals. Set to empty string to count everything. |
 | `TONOFCOV_TEST_NAME` | `""` | Populates LCOV's `TN:` field. |
 | `TONOFCOV_NO_INLINE_PROPAGATE` | — | Set to `1` to skip inline-propagation and post-processing passes; raw aggregation only. |
 | `TONOFCOV_NO_DEBUG` | — | Comma-separated substrings of target filenames to compile without debug info (no coverage for these contracts). Useful when debug-compiled code changes cell hashes that other contracts depend on. |
